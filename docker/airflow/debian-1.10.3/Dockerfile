@@ -123,6 +123,7 @@ RUN pip install --upgrade pip==19.0.1
 
 
 # From the airflow image on master
+# Adds astro to super users
 RUN adduser astro \
     && echo "astro ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/astro \
     && chmod 0440 /etc/sudoers.d/astro
@@ -135,7 +136,7 @@ RUN adduser astro \
 FROM ${APT_DEPS_IMAGE} as main
 SHELL ["/bin/bash", "-o", "pipefail", "-e", "-u", "-x", "-c"]
 
-
+# Pip install airflow and astro security manager
 RUN pip install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
   && pip install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.2/astronomer_fab_security_manager-1.0.2-py3-none-any.whl"
 
@@ -146,10 +147,8 @@ RUN pip install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
 
 FROM main
 
-RUN cd usr/local/lib/python3.6 && ls
 
-RUN cd usr/local/lib/python3.6/site-packages/airflow && ls
-
+# Install scripts
 RUN cd usr/local/lib/python3.6/site-packages/airflow/www_rbac \
   && npm install \
   && npm run build \
@@ -173,36 +172,18 @@ ARG ADDITIONAL_PYTHON_DEPS=""
 RUN mkdir -p ${AIRFLOW_HOME}/logs
 
 # Copy entrypoint to root
-COPY entrypoint /
+COPY include/entrypoint /
 
+# Copy cron scripts
+COPY include/clean-airflow-logs /etc/periodic/15min/clean-airflow-logs
 
 # Ensure our user has ownership to AIRFLOW_HOME
 RUN sudo chown -R astro: ${AIRFLOW_HOME}
 
 RUN whoami
 
-
-
-RUN grep root /etc/group
-RUN grep 'x:0:' /etc/passwd
-
-
-
 # Switch to AIRFLOW_HOME
 WORKDIR ${AIRFLOW_HOME}
-
-# Install ubuntu packages
-ONBUILD COPY packages.txt .
-ONBUILD RUN sudo cat packages.txt | xargs sudo apt-get install -y --no-install-recommends
-# Install python packages
-ONBUILD COPY requirements.txt .
-ONBUILD RUN sudo pip install --no-cache-dir -q -r requirements.txt
-# Copy entire project directory
-ONBUILD COPY . .
-ONBUILD RUN sudo chown -R astro:astro .
-
-USER astro
-EXPOSE 8080 5555 8793
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/entrypoint"]
 RUN ls
