@@ -124,9 +124,9 @@ RUN pip install --upgrade pip==19.0.1
 
 # From the airflow image on master
 # Adds astro to super users
-RUN adduser astro \
-    && echo "astro ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/astro \
-    && chmod 0440 /etc/sudoers.d/astro
+RUN adduser 100  --force-badname \
+    && echo "astro ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/100 \
+    && chmod 0440 /etc/sudoers.d/100
 
 
 #######################################################
@@ -136,6 +136,7 @@ RUN adduser astro \
 FROM ${APT_DEPS_IMAGE} as main
 SHELL ["/bin/bash", "-o", "pipefail", "-e", "-u", "-x", "-c"]
 
+RUN echo "try this"
 # Pip install airflow and astro security manager
 RUN pip install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
   && pip install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.2/astronomer_fab_security_manager-1.0.2-py3-none-any.whl"
@@ -144,6 +145,8 @@ RUN pip install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
 ####################
 # Installing node node_modules
 ###############
+
+## move this to same layer as airflow because its from tag.
 
 FROM main
 
@@ -167,23 +170,22 @@ RUN apt-get update \
 ARG ADDITIONAL_PYTHON_DEPS=""
 
 
-
 # Create logs directory so we can own it when we mount volumes
 RUN mkdir -p ${AIRFLOW_HOME}/logs
 
 # Copy entrypoint to root
 COPY include/entrypoint /
 
-# Copy cron scripts
-COPY include/clean-airflow-logs /etc/periodic/15min/clean-airflow-logs
 
 # Ensure our user has ownership to AIRFLOW_HOME
-RUN sudo chown -R astro: ${AIRFLOW_HOME}
+RUN sudo chown -R 100:100 ${AIRFLOW_HOME}
 
 RUN whoami
+USER 100
 
 # Switch to AIRFLOW_HOME
 WORKDIR ${AIRFLOW_HOME}
+RUN sudo chown 100:100 /entrypoint && sudo chmod u+s /entrypoint
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/entrypoint"]
 RUN ls

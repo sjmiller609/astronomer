@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM test_debian_user:latest
+FROM test_debian_reg:latest
 LABEL maintainer="Astronomer <humans@astronomer.io>"
 
 ARG BUILD_NUMBER=-1
@@ -28,4 +28,4 @@ ONBUILD COPY requirements.txt .
 ONBUILD RUN sudo pip install --no-cache-dir -q -r requirements.txt
 # Copy entire project directory
 ONBUILD COPY . .
-ONBUILD RUN sudo chown -R astro:astro .
+USER 100
