@@ -121,13 +121,12 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
 
 RUN pip install --upgrade pip==19.0.1
 
+RUN useradd --uid 1000 astro
+
+COPY include/sudoers /etc/sudoers.d/astro
+RUN visudo --check --file=/etc/sudoers.d/astro
 
 # From the airflow image on master
-# Adds astro to super users
-RUN adduser 100  --force-badname \
-    && echo "astro ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/100 \
-    && chmod 0440 /etc/sudoers.d/100
-
 
 #######################################################
 ######## Installed dependencies - now installing Airflow
@@ -136,7 +135,6 @@ RUN adduser 100  --force-badname \
 FROM ${APT_DEPS_IMAGE} as main
 SHELL ["/bin/bash", "-o", "pipefail", "-e", "-u", "-x", "-c"]
 
-RUN echo "try this"
 # Pip install airflow and astro security manager
 RUN pip install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
   && pip install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.2/astronomer_fab_security_manager-1.0.2-py3-none-any.whl"
@@ -171,22 +169,19 @@ ARG ADDITIONAL_PYTHON_DEPS=""
 
 
 # Create logs directory so we can own it when we mount volumes
-RUN mkdir -p ${AIRFLOW_HOME}/logs
+RUN install --directory --owner=astro "${AIRFLOW_HOME}" \
+    && install --directory --owner=astro "${AIRFLOW_HOME}/logs"
 
 # Copy entrypoint to root
 COPY include/entrypoint /
 
-
-# Ensure our user has ownership to AIRFLOW_HOME
-RUN sudo chown -R 100:100 ${AIRFLOW_HOME}
-
-RUN whoami
-USER 100
+# Though this is set here we currently override this in the helm template, so
+# this _might_ not have any effect once deployed. The /entrypoint script copes
+# with this
+USER astro
 
 # Switch to AIRFLOW_HOME
 WORKDIR ${AIRFLOW_HOME}
-RUN sudo chown 100:100 /entrypoint && sudo chmod u+s /entrypoint
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--", "/entrypoint"]
-RUN ls
-CMD ["--help", ""]
+CMD ["airflow", "--help"]

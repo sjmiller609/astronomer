@@ -1,14 +1,7 @@
 #!/bin/bash
-whoami
-
-
-
-echo "$AIRFLOW_HOME"
-echo airflow $@
-
-ls -al "$AIRFLOW_HOME"
-
 set -e
+
+[[ $UID == 1000 ]] || exec sudo -H -u astro "$0" "$@"
 
 # Airflow subcommand
 CMD=$2
