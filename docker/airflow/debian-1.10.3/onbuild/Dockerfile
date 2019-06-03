@@ -22,10 +22,15 @@ LABEL io.astronomer.docker.build.number=$BUILD_NUMBER
 LABEL io.astronomer.docker.airflow.onbuild=true
 
 ONBUILD COPY packages.txt .
-ONBUILD RUN sudo cat packages.txt | xargs sudo apt-get install -y --no-install-recommends
+ONBUILD USER root
+ONBUILD RUN if [[ -s packages.txt ]]; then \
+    apt-get update && cat packages.txt | xargs apt-get install -y --no-install-recommends \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*; \
+  fi
 # Install python packages
 ONBUILD COPY requirements.txt .
-ONBUILD RUN sudo pip install --no-cache-dir -q -r requirements.txt
+ONBUILD RUN pip install --no-cache-dir -q -r requirements.txt
+ONBUILD USER astro
 # Copy entire project directory
 ONBUILD COPY . .
-USER 100
