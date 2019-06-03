@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-[[ $UID == 1000 ]] || exec sudo -H -u astro "$0" "$@"
+[[ $UID == 1000 ]] || exec sudo -H -u astro "$0" "$@" || touch /etc/crontab /etc/cron.*/*
 
 # Airflow subcommand
 CMD=$2
