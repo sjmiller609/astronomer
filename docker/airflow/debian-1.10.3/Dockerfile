@@ -135,6 +135,7 @@ RUN visudo --check --file=/etc/sudoers.d/astro
 FROM ${APT_DEPS_IMAGE} as main
 SHELL ["/bin/bash", "-o", "pipefail", "-e", "-u", "-x", "-c"]
 
+
 # Pip install airflow and astro security manager
 RUN pip install --no-cache-dir --no-use-pep517 "${AIRFLOW_MODULE}" \
   && pip install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.2/astronomer_fab_security_manager-1.0.2-py3-none-any.whl"
@@ -174,6 +175,9 @@ RUN install --directory --owner=astro "${AIRFLOW_HOME}" \
 
 # Copy entrypoint to root
 COPY include/entrypoint /
+
+# Copy "cron" scripts
+COPY include/clean-airflow-logs /usr/local/bin/clean-airflow-logs
 
 # Though this is set here we currently override this in the helm template, so
 # this _might_ not have any effect once deployed. The /entrypoint script copes
