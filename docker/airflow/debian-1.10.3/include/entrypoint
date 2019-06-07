@@ -8,6 +8,10 @@ if [[ "$1" == "crond" ]]; then
   exec /usr/local/bin/clean-airflow-logs
 fi
 
+if [[ -d "$AIRFLOW_HOME/logs" && ! -w "$AIRFLOW_HOME/logs" ]]; then
+  sudo chown $UID "$AIRFLOW_HOME/logs"
+fi
+
 # Airflow subcommand
 CMD=$2
 
