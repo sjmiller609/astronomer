@@ -74,17 +74,21 @@ RUN apk update \
 	&& cp /usr/share/zoneinfo/UTC /etc/localtime \
 	&& pip3 install --no-cache-dir --upgrade pip==19.1.1 \
 	&& pip3 install --no-cache-dir --upgrade setuptools==39.0.1 \
-	&& pip3 install --no-cache-dir cython \
-	&& pip3 install --no-cache-dir numpy \
-	&& pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
-	&& pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.2/astronomer_fab_security_manager-1.0.2-py3-none-any.whl" \
-	&& cd /usr/lib/python3.6/site-packages/airflow/www_rbac \
+  && mkdir -p /opt/airflow_install/ \
+  && python3 -m /opt/airflow_install/venv \
+	&& ln -sf /opt/airflow_install/venv/bin/python3 /opt/airflow_install/venv/bin/python \
+	&& ln -sf /opt/airflow_install/venv/bin/pip3 /opt/airflow_install/venv/bin/pip
+	&& /opt/airflow_install/venv/bin/pip3 install --no-cache-dir cython \
+	&& /opt/airflow_install/venv/bin/pip3 install --no-cache-dir numpy \
+	&& /opt/airflow_install/venv/bin/pip3 install --no-cache-dir "${AIRFLOW_MODULE}" \
+	&& /opt/airflow_install/venv/bin/pip3 install --no-cache-dir "https://github.com/astronomer/astronomer-fab-securitymanager/releases/download/v1.0.2/astronomer_fab_security_manager-1.0.2-py3-none-any.whl" \
+	&& cd /opt/airflow_install/venv/lib/python3.6/site-packages/airflow/www_rbac \
 	&& npm install \
 	&& npm run build \
 	&& rm -rf node_modules \
-	&& apk del .build-deps \
-	&& ln -sf /usr/bin/python3 /usr/bin/python \
-	&& ln -sf /usr/bin/pip3 /usr/bin/pip
+	&& apk del .build-deps
+
+ENV PATH=/opt/airflow_install/venv/bin/:$PATH
 
 # Create logs directory so we can own it when we mount volumes
 RUN mkdir -p ${AIRFLOW_HOME}/logs
