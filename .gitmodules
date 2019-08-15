@@ -1,0 +1,3 @@
+[submodule "docker/platform/houston-api"]
+	path = docker/platform/houston-api
+	url = git@github.com:sjmiller609/houston-api.git
