@@ -1,3 +1,6 @@
 [submodule "docker/platform/houston-api"]
 	path = docker/platform/houston-api
 	url = git@github.com:sjmiller609/houston-api.git
+[submodule "docker/platform/commander"]
+	path = docker/platform/commander
+	url = git@github.com:sjmiller609/commander.git
