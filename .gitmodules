@@ -4,3 +4,6 @@
 [submodule "docker/platform/commander"]
 	path = docker/platform/commander
 	url = git@github.com:sjmiller609/commander.git
+[submodule "docker/platform/orbit-ui"]
+	path = docker/platform/orbit-ui
+	url = git@github.com:sjmiller609/orbit-ui.git
